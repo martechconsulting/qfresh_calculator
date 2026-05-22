@@ -216,6 +216,14 @@ body {
   display: block;
 }
 
+.field-description {
+  font-size: 0.8rem;
+  color: var(--text-mid);
+  margin-top: 0.5rem;
+  line-height: 1.5;
+  font-style: italic;
+}
+
 .q-nav {
   display: flex;
   justify-content: space-between;
@@ -325,6 +333,19 @@ body {
   color: var(--text-mid);
   max-width: 600px;
   margin: 0 auto 1rem;
+}
+
+.results-explanation {
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  max-width: 650px;
+  margin: 1.5rem auto 0;
+  padding: 1.25rem;
+  background: var(--bg-light);
+  border-left: 3px solid var(--primary-orange);
+  border-radius: 4px;
+  line-height: 1.6;
+  text-align: left;
 }
 
 .breakdown-grid {
@@ -497,6 +518,7 @@ body {
       <h2 class="results-headline" id="resultsHeadline">Total Annual Savings</h2>
       <div class="results-savings" id="totalSavings">$0</div>
       <p class="results-subhead" id="perLocationText">Savings across all locations</p>
+      <p class="results-explanation" id="resultsExplanation"></p>
     </div>
 
     <div class="breakdown-grid">
@@ -581,7 +603,7 @@ const questions = [
     hint: "Per location averages",
     fields: [
       { name: "dailySales", label: "Daily Sales (packs/location/day)", type: "number", required: true, placeholder: "12", min: 0.1, step: 0.1 },
-      { name: "turnoverShare", label: "Turnover Share of Shelf (%)", type: "number", required: true, placeholder: "50", min: 1, max: 100 },
+      { name: "turnoverShare", label: "Turnover Share of Shelf (%)", type: "number", required: true, placeholder: "50", min: 1, max: 100, description: "What percentage of your total inventory does this product represent? Example: If it's 25% of your shelf space or inventory value, enter 25." },
       { name: "currentShelfLife", label: "Current Shelf Life (days)", type: "number", required: true, placeholder: "8", min: 1 },
       { name: "foodCost", label: "Cost of Food in Package ($)", type: "number", required: true, placeholder: "3.00", min: 0.01, step: 0.01 }
     ]
@@ -593,14 +615,14 @@ const questions = [
     hint: "Per location averages",
     fields: [
       { name: "laborRate", label: "Average Labor Rate per Hour ($)", type: "number", required: true, placeholder: "15.00", min: 0.01, step: 0.01 },
-      { name: "handlingTime", label: "Time Handling 1 Package (minutes)", type: "number", required: true, placeholder: "2", min: 0.1, step: 0.1 }
+      { name: "handlingTime", label: "Time Handling 1 Package (minutes)", type: "number", required: true, placeholder: "2", min: 0.1, step: 0.1, description: "Total time to receive, unpack, stock, rotate, and manage one package from delivery to shelf. Include checking dates and handling damaged goods." }
     ]
   },
   {
     step: 4,
     eyebrow: "Step 4 of 4",
     text: "Packaging costs comparison",
-    hint: "Enter the price per package for each option",
+    hint: "We're comparing the cost per package of higher shelf life packaging vs. your current packaging. Enter the price difference between the two options.",
     fields: [
       { name: "higherPricePackage", label: "Higher Priced Package ($/pack)", type: "number", required: true, placeholder: "0.15", min: 0, step: 0.01 },
       { name: "lowerPricePackage", label: "Lower Priced Package ($/pack)", type: "number", required: true, placeholder: "0.10", min: 0, step: 0.01 }
@@ -642,6 +664,7 @@ function renderQuestion(step) {
           ${field.step !== undefined ? `step="${field.step}"` : ''}
           value="${formData[field.name] || ''}"
         />
+        ${field.description ? `<div class="field-description">${field.description}</div>` : ''}
         <div class="error-msg" id="${field.name}-error"></div>
       </div>
     `;
@@ -773,16 +796,21 @@ function calculateResults() {
   
   const totalSavingsEl = document.getElementById('totalSavings');
   const resultsHeadline = document.getElementById('resultsHeadline');
+  const resultsExplanation = document.getElementById('resultsExplanation');
   const totalSavingsFormatted = '$' + Math.abs(totalSavings).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   
   if (totalSavings >= 0) {
     totalSavingsEl.textContent = totalSavingsFormatted;
     totalSavingsEl.style.color = 'var(--primary-green)';
     resultsHeadline.textContent = 'Total Annual Savings';
+    resultsExplanation.textContent = 'By extending shelf life by one day, you save more on inventory and labor costs than the additional packaging costs. The higher shelf life packaging is worth the investment.';
+    resultsExplanation.style.borderLeftColor = 'var(--primary-green)';
   } else {
     totalSavingsEl.textContent = '-' + totalSavingsFormatted;
     totalSavingsEl.style.color = '#e53e3e';
     resultsHeadline.textContent = 'Net Annual Cost';
+    resultsExplanation.textContent = 'The additional packaging cost exceeds the savings from one extra day of shelf life. With your current numbers, the higher-priced packaging would cost you more than you would save in reduced inventory and labor.';
+    resultsExplanation.style.borderLeftColor = '#e53e3e';
   }
   
   document.getElementById('inventorySavings').textContent = '$' + (annualInventorySavings * numLocations).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

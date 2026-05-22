@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="Martech Consulting">
+<meta name="description" content="Calculate the value of one extra day of shelf life for your business. Built by Martech Consulting.">
+<title>Shelf Life ROI Calculator | Martech Consulting</title>
+<style>
+/*
+ * Shelf Life ROI Calculator
+ * Built by Martech Consulting
+ * https://martechconsulting.io
+ */
+
+:root {
+  --primary-dark: #231F20;
+  --primary-green: #23AB4F;
+  --primary-orange: #F26F22;
+  --accent-teal: #135466;
+  --accent-lime: #B4C217;
+  --accent-gray: #A7A8AC;
+  --text-dark: #2d3748;
+  --text-mid: #718096;
+  --text-light: #a0aec0;
+  --bg-light: #f7fafc;
+  --border: #e2e8f0;
+  --white: #ffffff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: var(--text-dark);
+  background: var(--white);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.container--narrow {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Hero Section */
+.calc-hero {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: clamp(2.5rem, 6vw, 4rem) 0 clamp(2rem, 4vw, 3rem);
+  position: relative;
+}
+
+.calc-hero__inner {
+  position: relative;
+  text-align: center;
+}
+
+.eyebrow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--primary-orange);
+  margin-bottom: 0.75rem;
+}
+
+.display {
+  font-size: clamp(1.8rem, 4.5vw, 3rem);
+  font-weight: 300;
+  color: var(--primary-dark);
+  margin-bottom: 1rem;
+  line-height: 1.1;
+}
+
+.display em {
+  font-style: normal;
+  color: var(--primary-orange);
+  font-weight: 400;
+}
+
+.calc-hero__sub {
+  font-size: clamp(0.9rem, 1.8vw, 1.05rem);
+  color: var(--text-mid);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Form Container */
+.form-container {
+  background: var(--bg-light);
+  min-height: 60vh;
+  padding: clamp(2rem, 5vw, 4rem) 0;
+}
+
+.question-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: clamp(2rem, 4vw, 3rem);
+  max-width: 700px;
+  margin: 0 auto;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  animation: fadeUp 0.4s ease-out;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+.q-eyebrow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--primary-orange);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.q-eyebrow::before {
+  content: '';
+  display: block;
+  width: 1rem;
+  height: 2px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.q-text {
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-weight: 400;
+  color: var(--primary-dark);
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+}
+
+.q-hint {
+  font-size: 0.82rem;
+  color: var(--text-mid);
+  margin-bottom: 1.75rem;
+  font-weight: 300;
+}
+
+.field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-mid);
+  margin-bottom: 0.3rem;
+}
+
+.form-field {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.85rem 1.1rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-field::placeholder {
+  color: var(--text-light);
+}
+
+.form-field:focus {
+  border-color: var(--primary-orange);
+}
+
+.form-field.error {
+  border-color: #fc8181;
+}
+
+.error-msg {
+  font-size: 0.75rem;
+  color: #fc8181;
+  margin-top: 0.3rem;
+  display: none;
+}
+
+.error-msg.show {
+  display: block;
+}
+
+.q-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.75rem;
+  gap: 1rem;
+}
+
+.btn-back {
+  background: var(--white);
+  border: 1px solid var(--border);
+  color: var(--text-mid);
+  padding: 0.7rem 1.4rem;
+  border-radius: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-back:hover {
+  border-color: var(--text-mid);
+  color: var(--text-dark);
+}
+
+.btn-next {
+  background: var(--primary-orange);
+  color: var(--white);
+  border: none;
+  padding: 0.7rem 2rem;
+  border-radius: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-next:hover {
+  background: #e05a1a;
+  transform: translateY(-1px);
+}
+
+.btn-next:active {
+  transform: translateY(0);
+}
+
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--bg-light);
+  z-index: 100;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary-orange);
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+/* Results Section */
+.results-section {
+  background: var(--white);
+  padding: clamp(3rem, 6vw, 5rem) 0;
+  display: none;
+}
+
+.results-section.active {
+  display: block;
+}
+
+.results-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.results-eyebrow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--primary-orange);
+  margin-bottom: 0.75rem;
+}
+
+.results-headline {
+  font-size: clamp(1.8rem, 4.5vw, 2.5rem);
+  font-weight: 300;
+  color: var(--primary-dark);
+  margin-bottom: 0.5rem;
+  line-height: 1.1;
+}
+
+.results-savings {
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 700;
+  color: var(--primary-orange);
+  margin: 1rem 0;
+}
+
+.results-subhead {
+  font-size: 1.1rem;
+  color: var(--text-mid);
+  max-width: 600px;
+  margin: 0 auto 1rem;
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin: 3rem 0;
+}
+
+.breakdown-card {
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.breakdown-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.breakdown-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.breakdown-value.positive {
+  color: var(--primary-green);
+}
+
+.breakdown-value.negative {
+  color: #e53e3e;
+}
+
+.breakdown-value.cost {
+  color: var(--accent-gray);
+}
+
+.breakdown-desc {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+  margin-top: 0.5rem;
+}
+
+.details-section {
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  padding: 2rem;
+  border-radius: 8px;
+  margin: 3rem 0;
+}
+
+.details-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--primary-dark);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: var(--text-mid);
+}
+
+.detail-value {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.cta-section {
+  text-align: center;
+  margin: 3rem 0;
+  padding: 2rem;
+  background: var(--bg-light);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.btn-primary {
+  background: var(--primary-orange);
+  color: var(--white);
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background: #e05a1a;
+  transform: translateY(-2px);
+}
+
+.restart-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.restart-link:hover {
+  color: var(--primary-orange);
+}
+
+@media (max-width: 600px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar">
+  <div class="progress-fill" id="progressFill"></div>
+</div>
+
+<!-- Hero -->
+<section class="calc-hero" id="hero">
+  <div class="calc-hero__inner">
+    <div class="container--narrow">
+      <p class="eyebrow">ROI Calculator</p>
+      <h1 class="display">How Much Is One Extra Day of <em>Shelf Life</em> Worth?</h1>
+      <p class="calc-hero__sub">For decades, packaging has played a critical role in extending the shelf life of fresh products. Even one additional day can significantly reduce shrink, improve sell-through, and protect margins. Find out what it's worth for your business.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Form Container -->
+<section class="form-container" id="formContainer">
+  <div class="container--narrow">
+    <div class="question-card" id="questionCard">
+      <!-- Questions will be injected here -->
+    </div>
+  </div>
+</section>
+
+<!-- Results -->
+<section class="results-section" id="results">
+  <div class="container">
+    <div class="results-hero">
+      <p class="results-eyebrow">Your Shelf Life ROI</p>
+      <h2 class="results-headline" id="resultsHeadline">Total Annual Savings</h2>
+      <div class="results-savings" id="totalSavings">$0</div>
+      <p class="results-subhead" id="perLocationText">Savings across all locations</p>
+    </div>
+
+    <div class="breakdown-grid">
+      <div class="breakdown-card">
+        <div class="breakdown-label">Inventory Savings</div>
+        <div class="breakdown-value positive" id="inventorySavings">$0</div>
+        <div class="breakdown-desc">From reduced food cost of inventory held</div>
+      </div>
+      
+      <div class="breakdown-card">
+        <div class="breakdown-label">Labor Savings</div>
+        <div class="breakdown-value positive" id="laborSavings">$0</div>
+        <div class="breakdown-desc">From fewer replenishment cycles</div>
+      </div>
+      
+      <div class="breakdown-card">
+        <div class="breakdown-label">Additional Packaging Cost</div>
+        <div class="breakdown-value cost" id="packagingCost">$0</div>
+        <div class="breakdown-desc">Cost difference for higher shelf life packaging</div>
+      </div>
+    </div>
+
+    <div class="details-section">
+      <div class="details-title">Per Location Breakdown</div>
+      <div class="detail-row">
+        <span class="detail-label">Daily Sales (packs/location/day)</span>
+        <span class="detail-value" id="detailDailySales">0</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Total Daily Inventory on Shelves</span>
+        <span class="detail-value" id="detailInventory">0</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Current Shelf Life</span>
+        <span class="detail-value" id="detailShelfLife">0 days</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Daily Food Cost of Inventory</span>
+        <span class="detail-value" id="detailFoodCost">$0</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Hours per Day to Replenish</span>
+        <span class="detail-value" id="detailLaborHours">0</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Annual Package Sales</span>
+        <span class="detail-value" id="detailAnnualSales">0 packs</span>
+      </div>
+    </div>
+
+    <div class="cta-section">
+      <h3 style="margin-bottom: 1rem; color: var(--navy);">Ready to validate these results?</h3>
+      <p style="color: var(--mid); margin-bottom: 1.5rem;">Test first. Test always! Validate performance with your specific products before making packaging decisions.</p>
+      <a href="mailto:contact@yourcompany.com" class="btn-primary">Contact Us</a>
+      <div class="restart-link" onclick="restartCalculator()">Start Over</div>
+    </div>
+  </div>
+</section>
+
+<script>
+/*
+ * Shelf Life ROI Calculator
+ * Built by Martech Consulting
+ * https://martechconsulting.io
+ */
+
+const questions = [
+  {
+    step: 1,
+    eyebrow: "Step 1 of 4",
+    text: "Let's start with your business basics",
+    hint: "This helps us tailor the calculation to your operation",
+    fields: [
+      { name: "businessName", label: "Business Name", type: "text", required: true, placeholder: "Your Company Name" },
+      { name: "numLocations", label: "Number of Locations", type: "number", required: true, placeholder: "1", min: 1 }
+    ]
+  },
+  {
+    step: 2,
+    eyebrow: "Step 2 of 4",
+    text: "Tell us about your inventory",
+    hint: "Per location averages",
+    fields: [
+      { name: "dailySales", label: "Daily Sales (packs/location/day)", type: "number", required: true, placeholder: "12", min: 0.1, step: 0.1 },
+      { name: "turnoverShare", label: "Turnover Share of Shelf (%)", type: "number", required: true, placeholder: "50", min: 1, max: 100 },
+      { name: "currentShelfLife", label: "Current Shelf Life (days)", type: "number", required: true, placeholder: "8", min: 1 },
+      { name: "foodCost", label: "Cost of Food in Package ($)", type: "number", required: true, placeholder: "3.00", min: 0.01, step: 0.01 }
+    ]
+  },
+  {
+    step: 3,
+    eyebrow: "Step 3 of 4",
+    text: "Labor costs and handling",
+    hint: "Per location averages",
+    fields: [
+      { name: "laborRate", label: "Average Labor Rate per Hour ($)", type: "number", required: true, placeholder: "15.00", min: 0.01, step: 0.01 },
+      { name: "handlingTime", label: "Time Handling 1 Package (minutes)", type: "number", required: true, placeholder: "2", min: 0.1, step: 0.1 }
+    ]
+  },
+  {
+    step: 4,
+    eyebrow: "Step 4 of 4",
+    text: "Packaging costs comparison",
+    hint: "Enter the price per package for each option",
+    fields: [
+      { name: "higherPricePackage", label: "Higher Priced Package ($/pack)", type: "number", required: true, placeholder: "0.15", min: 0, step: 0.01 },
+      { name: "lowerPricePackage", label: "Lower Priced Package ($/pack)", type: "number", required: true, placeholder: "0.10", min: 0, step: 0.01 }
+    ]
+  }
+];
+
+let currentStep = 1;
+let formData = {};
+
+function renderQuestion(step) {
+  const q = questions[step - 1];
+  const card = document.getElementById('questionCard');
+  
+  let fieldsHTML = '<div class="field-stack">';
+  
+  const gridFields = q.fields.length === 2 || q.fields.length === 4;
+  
+  if (gridFields && q.fields.length === 2) {
+    fieldsHTML += '<div class="field-row">';
+  }
+  
+  q.fields.forEach((field, idx) => {
+    if (gridFields && q.fields.length === 4) {
+      if (idx === 0 || idx === 2) fieldsHTML += '<div class="field-row">';
+    }
+    
+    fieldsHTML += `
+      <div class="field-group">
+        <label class="field-label" for="${field.name}">${field.label}</label>
+        <input 
+          type="${field.type}" 
+          id="${field.name}" 
+          name="${field.name}" 
+          class="form-field" 
+          placeholder="${field.placeholder || ''}"
+          ${field.min !== undefined ? `min="${field.min}"` : ''}
+          ${field.max !== undefined ? `max="${field.max}"` : ''}
+          ${field.step !== undefined ? `step="${field.step}"` : ''}
+          value="${formData[field.name] || ''}"
+        />
+        <div class="error-msg" id="${field.name}-error"></div>
+      </div>
+    `;
+    
+    if (gridFields && q.fields.length === 4) {
+      if (idx === 1 || idx === 3) fieldsHTML += '</div>';
+    }
+  });
+  
+  if (gridFields && q.fields.length === 2) {
+    fieldsHTML += '</div>';
+  }
+  
+  fieldsHTML += '</div>';
+  
+  card.innerHTML = `
+    <div class="q-eyebrow">${q.eyebrow}</div>
+    <h2 class="q-text">${q.text}</h2>
+    <p class="q-hint">${q.hint}</p>
+    ${fieldsHTML}
+    <div class="q-nav">
+      ${step > 1 ? '<button class="btn-back" onclick="prevStep()">← Back</button>' : '<div></div>'}
+      <button class="btn-next" onclick="nextStep()">${step === questions.length ? 'Calculate Results' : 'Continue →'}</button>
+    </div>
+  `;
+  
+  updateProgress();
+}
+
+function validateStep() {
+  const q = questions[currentStep - 1];
+  let valid = true;
+  
+  q.fields.forEach(field => {
+    const input = document.getElementById(field.name);
+    const error = document.getElementById(`${field.name}-error`);
+    
+    input.classList.remove('error');
+    error.classList.remove('show');
+    
+    if (field.required && (!input.value || input.value.trim() === '')) {
+      input.classList.add('error');
+      error.textContent = 'This field is required';
+      error.classList.add('show');
+      valid = false;
+    } else if (field.type === 'number') {
+      const val = parseFloat(input.value);
+      if (isNaN(val)) {
+        input.classList.add('error');
+        error.textContent = 'Please enter a valid number';
+        error.classList.add('show');
+        valid = false;
+      } else if (field.min !== undefined && val < field.min) {
+        input.classList.add('error');
+        error.textContent = `Minimum value is ${field.min}`;
+        error.classList.add('show');
+        valid = false;
+      } else if (field.max !== undefined && val > field.max) {
+        input.classList.add('error');
+        error.textContent = `Maximum value is ${field.max}`;
+        error.classList.add('show');
+        valid = false;
+      }
+    }
+  });
+  
+  return valid;
+}
+
+function saveCurrentStep() {
+  const q = questions[currentStep - 1];
+  q.fields.forEach(field => {
+    const input = document.getElementById(field.name);
+    formData[field.name] = input.value;
+  });
+}
+
+function nextStep() {
+  if (!validateStep()) return;
+  
+  saveCurrentStep();
+  
+  if (currentStep === questions.length) {
+    calculateResults();
+  } else {
+    currentStep++;
+    renderQuestion(currentStep);
+  }
+}
+
+function prevStep() {
+  if (currentStep > 1) {
+    saveCurrentStep();
+    currentStep--;
+    renderQuestion(currentStep);
+  }
+}
+
+function updateProgress() {
+  const progress = (currentStep / questions.length) * 100;
+  document.getElementById('progressFill').style.width = progress + '%';
+}
+
+function calculateResults() {
+  const dailySales = parseFloat(formData.dailySales);
+  const turnoverShare = parseFloat(formData.turnoverShare) / 100;
+  const currentShelfLife = parseFloat(formData.currentShelfLife);
+  const foodCost = parseFloat(formData.foodCost);
+  const laborRate = parseFloat(formData.laborRate);
+  const handlingTime = parseFloat(formData.handlingTime);
+  const higherPricePackage = parseFloat(formData.higherPricePackage);
+  const lowerPricePackage = parseFloat(formData.lowerPricePackage);
+  const numLocations = parseInt(formData.numLocations);
+  
+  const totalDailyInventory = dailySales / turnoverShare;
+  const dailyFoodCostInventory = foodCost * totalDailyInventory;
+  const inventoryValueExtra = dailyFoodCostInventory / (currentShelfLife + 1);
+  const annualInventorySavings = inventoryValueExtra * 365;
+  
+  const hoursPerDay = (handlingTime * dailySales) / 60;
+  const laborCostExtra = (laborRate * hoursPerDay) / (currentShelfLife + 1);
+  const annualLaborSavings = laborCostExtra * 365;
+  
+  const annualPackageSales = dailySales * 365;
+  const packagingCostDelta = (higherPricePackage - lowerPricePackage) * annualPackageSales;
+  
+  const savingsPerLocation = annualInventorySavings + annualLaborSavings - packagingCostDelta;
+  const totalSavings = savingsPerLocation * numLocations;
+  
+  const totalSavingsEl = document.getElementById('totalSavings');
+  const resultsHeadline = document.getElementById('resultsHeadline');
+  const totalSavingsFormatted = '$' + Math.abs(totalSavings).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  
+  if (totalSavings >= 0) {
+    totalSavingsEl.textContent = totalSavingsFormatted;
+    totalSavingsEl.style.color = 'var(--primary-green)';
+    resultsHeadline.textContent = 'Total Annual Savings';
+  } else {
+    totalSavingsEl.textContent = '-' + totalSavingsFormatted;
+    totalSavingsEl.style.color = '#e53e3e';
+    resultsHeadline.textContent = 'Net Annual Cost';
+  }
+  
+  document.getElementById('inventorySavings').textContent = '$' + (annualInventorySavings * numLocations).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('laborSavings').textContent = '$' + (annualLaborSavings * numLocations).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('packagingCost').textContent = '$' + Math.abs(packagingCostDelta * numLocations).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  
+  document.getElementById('detailDailySales').textContent = dailySales.toFixed(1);
+  document.getElementById('detailInventory').textContent = totalDailyInventory.toFixed(1) + ' packs';
+  document.getElementById('detailShelfLife').textContent = currentShelfLife + ' days';
+  document.getElementById('detailFoodCost').textContent = '$' + dailyFoodCostInventory.toFixed(2);
+  document.getElementById('detailLaborHours').textContent = hoursPerDay.toFixed(2) + ' hours';
+  document.getElementById('detailAnnualSales').textContent = annualPackageSales.toLocaleString('en-US');
+  
+  const locationText = numLocations === 1 ? 'Per location' : `Across ${numLocations} locations`;
+  document.getElementById('perLocationText').textContent = locationText;
+  
+  document.getElementById('formContainer').style.display = 'none';
+  document.getElementById('hero').style.display = 'none';
+  document.getElementById('results').classList.add('active');
+  document.getElementById('progressFill').style.width = '100%';
+  
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restartCalculator() {
+  currentStep = 1;
+  formData = {};
+  document.getElementById('formContainer').style.display = 'block';
+  document.getElementById('hero').style.display = 'block';
+  document.getElementById('results').classList.remove('active');
+  renderQuestion(1);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+renderQuestion(1);
+</script>
+
+</body>
+</html>

@@ -49,16 +49,22 @@
 #shelf-life-calc .q-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 1.75rem; gap: 1rem; }
 #shelf-life-calc .btn-back { background: var(--white); border: 1px solid var(--border); color: var(--text-mid); padding: 0.7rem 1.4rem; border-radius: 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 0.84rem; cursor: pointer; transition: all 0.15s; }
 #shelf-life-calc .btn-back:hover { border-color: var(--text-mid); color: var(--text-dark); }
-#shelf-life-calc .btn-next { background: var(--primary-orange); color: var(--white); border: none; padding: 0.7rem 2rem; border-radius: 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 0.84rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+#shelf-life-calc .btn-next { background: var(--primary-orange); color: var(--white); border: none; padding: 0.7rem 2rem; border-radius: 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 0.84rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.5rem; }
 #shelf-life-calc .btn-next:hover { background: #e05a1a; transform: translateY(-1px); }
 #shelf-life-calc .btn-next:active { transform: translateY(0); }
+#shelf-life-calc .btn-next:disabled { background: var(--accent-gray); cursor: not-allowed; transform: none; }
+#shelf-life-calc .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: slcSpin 0.6s linear infinite; display: none; }
+#shelf-life-calc .btn-next.loading .spinner { display: block; }
+@keyframes slcSpin { to { transform: rotate(360deg); } }
 #shelf-life-calc .results-section { background: var(--white); padding: clamp(3rem, 6vw, 5rem) 0; display: none; }
 #shelf-life-calc .results-section.active { display: block; }
 #shelf-life-calc .results-hero { text-align: center; margin-bottom: 3rem; }
 #shelf-life-calc .results-eyebrow { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--primary-orange); margin-bottom: 0.75rem; }
 #shelf-life-calc .results-headline { font-size: clamp(1.8rem, 4.5vw, 2.5rem); font-weight: 300; color: var(--primary-dark); margin-bottom: 0.5rem; line-height: 1.1; }
 #shelf-life-calc .results-savings { font-size: clamp(3rem, 8vw, 5rem); font-weight: 700; color: var(--primary-orange); margin: 1rem 0; }
-#shelf-life-calc .results-subhead { font-size: 1.1rem; color: var(--text-mid); max-width: 600px; margin: 0 auto 1rem; }
+#shelf-life-calc .results-subhead { font-size: 1.1rem; color: var(--text-mid); max-width: 600px; margin: 0 auto; }
+#shelf-life-calc .print-notice { font-size: 0.82rem; color: var(--text-light); max-width: 600px; margin: 0.75rem auto 0; padding: 0.6rem 1rem; background: var(--bg-light); border-radius: 4px; display: inline-block; }
+#shelf-life-calc .print-notice strong { color: var(--text-mid); }
 #shelf-life-calc .results-explanation { font-size: 0.95rem; color: var(--text-dark); max-width: 650px; margin: 1.5rem auto 0; padding: 1.25rem; background: var(--bg-light); border-left: 3px solid var(--primary-orange); border-radius: 4px; line-height: 1.6; text-align: left; }
 #shelf-life-calc .breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 3rem 0; }
 #shelf-life-calc .breakdown-card { background: var(--bg-light); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; }
@@ -75,6 +81,10 @@
 #shelf-life-calc .detail-label { color: var(--text-mid); }
 #shelf-life-calc .detail-value { color: var(--primary-dark); font-weight: 600; }
 #shelf-life-calc .cta-section { text-align: center; margin: 3rem 0; padding: 2rem; background: var(--bg-light); border-radius: 8px; border: 1px solid var(--border); }
+#shelf-life-calc .opt-in-row { display: flex; align-items: flex-start; gap: 0.75rem; justify-content: center; margin: 0 auto 1.5rem; max-width: 480px; text-align: left; }
+#shelf-life-calc .opt-in-row input[type="checkbox"] { width: 18px; height: 18px; min-width: 18px; margin-top: 2px; accent-color: var(--primary-orange); cursor: pointer; }
+#shelf-life-calc .opt-in-label { font-size: 0.88rem; color: var(--text-mid); cursor: pointer; line-height: 1.5; }
+#shelf-life-calc .opt-in-label strong { color: var(--text-dark); }
 #shelf-life-calc .btn-primary { background: var(--primary-orange); color: var(--white); border: none; padding: 1rem 2.5rem; border-radius: 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-block; text-decoration: none; }
 #shelf-life-calc .btn-primary:hover { background: #e05a1a; transform: translateY(-2px); }
 #shelf-life-calc .restart-link { display: inline-block; margin-top: 1.5rem; color: var(--text-light); font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
@@ -82,6 +92,15 @@
 @media (max-width: 600px) {
   #shelf-life-calc .field-row { grid-template-columns: 1fr; }
   #shelf-life-calc .breakdown-grid { grid-template-columns: 1fr; }
+}
+@media print {
+  #shelf-life-calc .progress-bar,
+  #shelf-life-calc .calc-hero,
+  #shelf-life-calc .form-container,
+  #shelf-life-calc .cta-section,
+  #shelf-life-calc .restart-link,
+  #shelf-life-calc .print-notice { display: none !important; }
+  #shelf-life-calc .results-section { display: block !important; padding: 1rem 0; }
 }
 </style>
 
@@ -96,7 +115,7 @@
       <div class="slc-container--narrow">
         <p class="eyebrow">ROI Calculator</p>
         <h2 class="display">How Much Is One Extra Day of <em>Shelf Life</em> Worth?</h2>
-        <p class="calc-hero__sub">For decades, packaging has played a critical role in extending the shelf life of fresh products. Even one additional day can significantly reduce shrink, improve sell-through, and protect margins. Find out what it's worth for your business.</p>
+        <p class="calc-hero__sub">For decades, packaging has played a critical role in extending the shelf life of fresh products. Even one additional day can significantly reduce shrink, improve sell-through, and protect margins. Answer four quick questions to find out what it's worth for your operation. We'll send your results to your inbox.</p>
       </div>
     </div>
   </section>
@@ -114,6 +133,7 @@
         <h2 class="results-headline" id="slcResultsHeadline">Total Annual Savings</h2>
         <div class="results-savings" id="slcTotalSavings">$0</div>
         <p class="results-subhead" id="slcPerLocationText">Savings across all locations</p>
+        <p class="print-notice"><strong>Save these results:</strong> Right-click anywhere on this page and choose <strong>Print</strong>, or press <strong>Ctrl+P</strong> (Windows) / <strong>Cmd+P</strong> (Mac) to print or save as PDF.</p>
         <p class="results-explanation" id="slcResultsExplanation"></p>
       </div>
       <div class="breakdown-grid">
@@ -163,7 +183,13 @@
       <div class="cta-section">
         <h3 style="margin-bottom:1rem;color:#231F20;">Ready to validate these results?</h3>
         <p style="color:#718096;margin-bottom:1.5rem;">Test first. Test always! Validate performance with your specific products before making packaging decisions.</p>
-        <a href="mailto:contact@martechconsulting.io" class="btn-primary">Contact Us</a>
+        <div class="opt-in-row">
+          <input type="checkbox" id="slcQFreshOptIn">
+          <label class="opt-in-label" for="slcQFreshOptIn">
+            <strong>Yes, I'd like QFresh to reach out with more information</strong> about packaging solutions that can extend my product's shelf life.
+          </label>
+        </div>
+        <a id="slcContactLink" href="#" class="btn-primary">Contact QFresh</a>
         <div class="restart-link" onclick="slcRestart()">Start Over</div>
       </div>
     </div>
@@ -173,15 +199,23 @@
 
 <script>
 (function () {
+
+  /* ─── CONFIGURATION — only this line needs to change ────────── */
+  var WORKER_URL    = 'https://YOUR-WORKER-NAME.YOUR-SUBDOMAIN.workers.dev';
+  var CONTACT_EMAIL = 'contact@qfresh.com';
+  /* ──────────────────────────────────────────────────────────── */
+
   var questions = [
     {
       step: 1,
       eyebrow: "Step 1 of 4",
-      text: "Let\u2019s start with your business basics",
-      hint: "This helps us tailor the calculation to your operation",
+      text: "Let\u2019s start with your contact information",
+      hint: "We\u2019ll use this to send you a copy of your results. Your information is never shared or sold.",
       fields: [
-        { name: "slc_businessName", label: "Business Name", type: "text", required: true, placeholder: "Your Company Name" },
-        { name: "slc_numLocations", label: "Number of Locations", type: "number", required: true, placeholder: "1", min: 1 }
+        { name: "slc_businessName", label: "Business Name",       type: "text",   required: true, placeholder: "Your Company Name" },
+        { name: "slc_numLocations", label: "Number of Locations", type: "number", required: true, placeholder: "1", min: 1 },
+        { name: "slc_email",        label: "Business Email",      type: "email",  required: true, placeholder: "you@yourcompany.com", validate: "email" },
+        { name: "slc_phone",        label: "Phone Number",        type: "tel",    required: true, placeholder: "(555) 555-5555",      validate: "phone" }
       ]
     },
     {
@@ -190,10 +224,10 @@
       text: "Tell us about your inventory",
       hint: "Per location averages",
       fields: [
-        { name: "slc_dailySales", label: "Daily Sales (packs/location/day)", type: "number", required: true, placeholder: "12", min: 0.1, step: 0.1 },
-        { name: "slc_turnoverShare", label: "Turnover Share of Shelf (%)", type: "number", required: true, placeholder: "50", min: 1, max: 100, description: "What percentage of your total inventory does this product represent? Example: If it\u2019s 25% of your shelf space or inventory value, enter 25." },
-        { name: "slc_currentShelfLife", label: "Current Shelf Life (days)", type: "number", required: true, placeholder: "8", min: 1 },
-        { name: "slc_foodCost", label: "Cost of Food in Package ($)", type: "number", required: true, placeholder: "3.00", min: 0.01, step: 0.01 }
+        { name: "slc_dailySales",       label: "Daily Sales (packs/location/day)", type: "number", required: true, placeholder: "12",   min: 0.1, step: 0.1 },
+        { name: "slc_turnoverShare",    label: "Turnover Share of Shelf (%)",      type: "number", required: true, placeholder: "50",   min: 1, max: 100, description: "What percentage of your total inventory does this product represent? Example: If it\u2019s 25% of your shelf space or inventory value, enter 25." },
+        { name: "slc_currentShelfLife", label: "Current Shelf Life (days)",        type: "number", required: true, placeholder: "8",    min: 1 },
+        { name: "slc_foodCost",         label: "Cost of Food in Package ($)",      type: "number", required: true, placeholder: "3.00", min: 0.01, step: 0.01 }
       ]
     },
     {
@@ -202,8 +236,8 @@
       text: "Labor costs and handling",
       hint: "Per location averages",
       fields: [
-        { name: "slc_laborRate", label: "Average Labor Rate per Hour ($)", type: "number", required: true, placeholder: "15.00", min: 0.01, step: 0.01 },
-        { name: "slc_handlingTime", label: "Time Handling 1 Package (minutes)", type: "number", required: true, placeholder: "2", min: 0.1, step: 0.1, description: "Total time to receive, unpack, stock, rotate, and manage one package from delivery to shelf. Include checking dates and handling damaged goods." }
+        { name: "slc_laborRate",    label: "Average Labor Rate per Hour ($)",  type: "number", required: true, placeholder: "15.00", min: 0.01, step: 0.01 },
+        { name: "slc_handlingTime", label: "Time Handling 1 Package (minutes)", type: "number", required: true, placeholder: "2",     min: 0.1,  step: 0.1, description: "Total time to receive, unpack, stock, rotate, and manage one package from delivery to shelf. Include checking dates and handling damaged goods." }
       ]
     },
     {
@@ -213,13 +247,13 @@
       hint: "We\u2019re comparing the cost per package of higher shelf life packaging vs. your current packaging. Enter the price difference between the two options.",
       fields: [
         { name: "slc_higherPricePackage", label: "Higher Priced Package ($/pack)", type: "number", required: true, placeholder: "0.15", min: 0, step: 0.01 },
-        { name: "slc_lowerPricePackage", label: "Lower Priced Package ($/pack)", type: "number", required: true, placeholder: "0.10", min: 0, step: 0.01 }
+        { name: "slc_lowerPricePackage",  label: "Lower Priced Package ($/pack)",  type: "number", required: true, placeholder: "0.10", min: 0, step: 0.01 }
       ]
     }
   ];
 
   var currentStep = 1;
-  var formData = {};
+  var formData    = {};
 
   function el(id) { return document.getElementById(id); }
 
@@ -227,28 +261,38 @@
     return '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
+  function isValidEmail(v) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  }
+
+  function isValidPhone(v) {
+    var digits = v.replace(/\D/g, '');
+    return digits.length >= 10 && digits.length <= 15;
+  }
+
+  /* ─── RENDER ────────────────────────────────────────────────── */
   function renderQuestion(step) {
-    var q = questions[step - 1];
-    var html = '<div class="field-stack">';
-    var grid2 = q.fields.length === 2;
-    var grid4 = q.fields.length === 4;
-    if (grid2) html += '<div class="field-row">';
-    q.fields.forEach(function (field, idx) {
-      if (grid4 && (idx === 0 || idx === 2)) html += '<div class="field-row">';
-      html += '<div class="field-group">';
-      html += '<label class="field-label" for="' + field.name + '">' + field.label + '</label>';
-      html += '<input type="' + field.type + '" id="' + field.name + '" class="form-field" placeholder="' + (field.placeholder || '') + '"';
-      if (field.min !== undefined) html += ' min="' + field.min + '"';
-      if (field.max !== undefined) html += ' max="' + field.max + '"';
-      if (field.step !== undefined) html += ' step="' + field.step + '"';
-      html += ' value="' + (formData[field.name] || '') + '">';
-      if (field.description) html += '<div class="field-description">' + field.description + '</div>';
-      html += '<div class="error-msg" id="' + field.name + '-error"></div>';
+    var q      = questions[step - 1];
+    var fields = q.fields;
+    var html   = '';
+
+    if (step === 1) {
+      html += '<div class="field-stack">';
+      html += '<div class="field-row">' + buildField(fields[0]) + buildField(fields[1]) + '</div>';
+      html += '<div class="field-row">' + buildField(fields[2]) + buildField(fields[3]) + '</div>';
       html += '</div>';
-      if (grid4 && (idx === 1 || idx === 3)) html += '</div>';
-    });
-    if (grid2) html += '</div>';
-    html += '</div>';
+    } else if (fields.length === 4) {
+      html += '<div class="field-stack">';
+      html += '<div class="field-row">' + buildField(fields[0]) + buildField(fields[1]) + '</div>';
+      html += '<div class="field-row">' + buildField(fields[2]) + buildField(fields[3]) + '</div>';
+      html += '</div>';
+    } else if (fields.length === 2) {
+      html += '<div class="field-stack"><div class="field-row">' + buildField(fields[0]) + buildField(fields[1]) + '</div></div>';
+    } else {
+      html += '<div class="field-stack">';
+      fields.forEach(function (f) { html += buildField(f); });
+      html += '</div>';
+    }
 
     el('slcQuestionCard').innerHTML =
       '<div class="q-eyebrow">' + q.eyebrow + '</div>' +
@@ -257,49 +301,128 @@
       html +
       '<div class="q-nav">' +
       (step > 1 ? '<button class="btn-back" onclick="slcPrev()">&#8592; Back</button>' : '<div></div>') +
-      '<button class="btn-next" onclick="slcNext()">' + (step === questions.length ? 'Calculate Results' : 'Continue &#8594;') + '</button>' +
+      '<button class="btn-next" id="slcNextBtn" onclick="slcNext()">' +
+        (step === questions.length ? 'Calculate Results' : 'Continue &#8594;') +
+        '<span class="spinner"></span>' +
+      '</button>' +
       '</div>';
 
     el('slcProgressFill').style.width = ((step / questions.length) * 100) + '%';
   }
 
+  function buildField(field) {
+    var html      = '<div class="field-group">';
+    var inputType = (field.type === 'email' || field.type === 'tel') ? 'text' : field.type;
+
+    html += '<label class="field-label" for="' + field.name + '">' + field.label + '</label>';
+    html += '<input type="' + inputType + '" id="' + field.name + '" class="form-field" placeholder="' + (field.placeholder || '') + '"';
+    if (field.min  !== undefined && field.type === 'number') html += ' min="'  + field.min  + '"';
+    if (field.max  !== undefined && field.type === 'number') html += ' max="'  + field.max  + '"';
+    if (field.step !== undefined && field.type === 'number') html += ' step="' + field.step + '"';
+    if (field.type === 'tel') html += ' inputmode="tel"';
+    html += ' value="' + (formData[field.name] || '') + '">';
+
+    if (field.description) html += '<div class="field-description">' + field.description + '</div>';
+    html += '<div class="error-msg" id="' + field.name + '-error"></div>';
+    html += '</div>';
+    return html;
+  }
+
+  /* ─── VALIDATION ────────────────────────────────────────────── */
   function validate() {
-    var q = questions[currentStep - 1];
+    var q     = questions[currentStep - 1];
     var valid = true;
+
     q.fields.forEach(function (field) {
       var input = el(field.name);
       var errEl = el(field.name + '-error');
       input.classList.remove('error');
       errEl.classList.remove('show');
-      if (field.required && (!input.value || input.value.trim() === '')) {
-        input.classList.add('error');
-        errEl.textContent = 'This field is required';
-        errEl.classList.add('show');
+
+      var val = input.value.trim();
+
+      if (field.required && val === '') {
+        setError(input, errEl, 'This field is required.');
         valid = false;
-      } else if (field.type === 'number' && input.value !== '') {
-        var val = parseFloat(input.value);
-        if (isNaN(val)) {
-          input.classList.add('error'); errEl.textContent = 'Please enter a valid number'; errEl.classList.add('show'); valid = false;
-        } else if (field.min !== undefined && val < field.min) {
-          input.classList.add('error'); errEl.textContent = 'Minimum value is ' + field.min; errEl.classList.add('show'); valid = false;
-        } else if (field.max !== undefined && val > field.max) {
-          input.classList.add('error'); errEl.textContent = 'Maximum value is ' + field.max; errEl.classList.add('show'); valid = false;
+        return;
+      }
+
+      if (val !== '') {
+        if (field.validate === 'email' && !isValidEmail(val)) {
+          setError(input, errEl, 'Please enter a valid email address.');
+          valid = false;
+        } else if (field.validate === 'phone' && !isValidPhone(val)) {
+          setError(input, errEl, 'Please enter a valid phone number (at least 10 digits).');
+          valid = false;
+        } else if (field.type === 'number') {
+          var num = parseFloat(val);
+          if (isNaN(num)) {
+            setError(input, errEl, 'Please enter a valid number.');
+            valid = false;
+          } else if (field.min !== undefined && num < field.min) {
+            setError(input, errEl, 'Minimum value is ' + field.min + '.');
+            valid = false;
+          } else if (field.max !== undefined && num > field.max) {
+            setError(input, errEl, 'Maximum value is ' + field.max + '.');
+            valid = false;
+          }
         }
       }
     });
+
     return valid;
   }
 
+  function setError(input, errEl, msg) {
+    input.classList.add('error');
+    errEl.textContent = msg;
+    errEl.classList.add('show');
+  }
+
+  /* ─── SAVE ──────────────────────────────────────────────────── */
   function save() {
     questions[currentStep - 1].fields.forEach(function (field) {
-      formData[field.name] = el(field.name).value;
+      formData[field.name] = el(field.name).value.trim();
     });
   }
 
+  /* ─── WORKER SUBMISSION ─────────────────────────────────────── */
+  function submitLead() {
+    return fetch(WORKER_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        businessName:  formData.slc_businessName,
+        numLocations:  formData.slc_numLocations,
+        email:         formData.slc_email,
+        phone:         formData.slc_phone
+      })
+    }).then(function (r) {
+      if (!r.ok) console.warn('[SLC] Lead submission failed:', r.status);
+    }).catch(function (err) {
+      console.warn('[SLC] Lead submission error:', err);
+    });
+  }
+
+  /* ─── NAVIGATION ────────────────────────────────────────────── */
   window.slcNext = function () {
     if (!validate()) return;
     save();
-    if (currentStep === questions.length) {
+
+    if (currentStep === 1) {
+      var btn = el('slcNextBtn');
+      btn.disabled = true;
+      btn.classList.add('loading');
+      btn.querySelector('.spinner').style.display = 'block';
+
+      submitLead().finally(function () {
+        btn.disabled = false;
+        btn.classList.remove('loading');
+        btn.querySelector('.spinner').style.display = 'none';
+        currentStep++;
+        renderQuestion(currentStep);
+      });
+    } else if (currentStep === questions.length) {
       calculate();
     } else {
       currentStep++;
@@ -313,36 +436,37 @@
 
   window.slcRestart = function () {
     currentStep = 1;
-    formData = {};
+    formData    = {};
     el('slcFormContainer').style.display = 'block';
-    el('slcHero').style.display = 'block';
+    el('slcHero').style.display          = 'block';
     el('slcResults').classList.remove('active');
     renderQuestion(1);
     el('shelf-life-calc').scrollIntoView({ behavior: 'smooth' });
   };
 
+  /* ─── CALCULATE ─────────────────────────────────────────────── */
   function calculate() {
-    var dailySales        = parseFloat(formData.slc_dailySales);
-    var turnoverShare     = parseFloat(formData.slc_turnoverShare) / 100;
-    var currentShelfLife  = parseFloat(formData.slc_currentShelfLife);
-    var foodCost          = parseFloat(formData.slc_foodCost);
-    var laborRate         = parseFloat(formData.slc_laborRate);
-    var handlingTime      = parseFloat(formData.slc_handlingTime);
-    var higherPrice       = parseFloat(formData.slc_higherPricePackage);
-    var lowerPrice        = parseFloat(formData.slc_lowerPricePackage);
-    var numLocations      = parseInt(formData.slc_numLocations);
+    var dailySales       = parseFloat(formData.slc_dailySales);
+    var turnoverShare    = parseFloat(formData.slc_turnoverShare) / 100;
+    var currentShelfLife = parseFloat(formData.slc_currentShelfLife);
+    var foodCost         = parseFloat(formData.slc_foodCost);
+    var laborRate        = parseFloat(formData.slc_laborRate);
+    var handlingTime     = parseFloat(formData.slc_handlingTime);
+    var higherPrice      = parseFloat(formData.slc_higherPricePackage);
+    var lowerPrice       = parseFloat(formData.slc_lowerPricePackage);
+    var numLocations     = parseInt(formData.slc_numLocations);
 
-    var totalDailyInventory   = dailySales / turnoverShare;
-    var dailyFoodCost         = foodCost * totalDailyInventory;
-    var inventoryValueExtra   = dailyFoodCost / (currentShelfLife + 1);
+    var totalDailyInventory    = dailySales / turnoverShare;
+    var dailyFoodCost          = foodCost * totalDailyInventory;
+    var inventoryValueExtra    = dailyFoodCost / (currentShelfLife + 1);
     var annualInventorySavings = inventoryValueExtra * 365;
 
-    var hoursPerDay           = (handlingTime * dailySales) / 60;
-    var laborCostExtra        = (laborRate * hoursPerDay) / (currentShelfLife + 1);
-    var annualLaborSavings    = laborCostExtra * 365;
+    var hoursPerDay        = (handlingTime * dailySales) / 60;
+    var laborCostExtra     = (laborRate * hoursPerDay) / (currentShelfLife + 1);
+    var annualLaborSavings = laborCostExtra * 365;
 
-    var annualPackageSales    = dailySales * 365;
-    var packagingCostDelta    = (higherPrice - lowerPrice) * annualPackageSales;
+    var annualPackageSales = dailySales * 365;
+    var packagingCostDelta = (higherPrice - lowerPrice) * annualPackageSales;
 
     var totalSavings = (annualInventorySavings + annualLaborSavings - packagingCostDelta) * numLocations;
 
@@ -375,10 +499,18 @@
     el('slcDetailAnnualSales').textContent = annualPackageSales.toLocaleString('en-US');
     el('slcPerLocationText').textContent   = numLocations === 1 ? 'Per location' : 'Across ' + numLocations + ' locations';
 
+    var subject = 'Shelf Life ROI Results \u2014 ' + encodeURIComponent(formData.slc_businessName || 'Inquiry');
+    var body    = encodeURIComponent(
+      'Hi QFresh,\n\nI just ran the Shelf Life ROI Calculator and would like to learn more about your packaging solutions.\n\nBusiness: ' +
+      (formData.slc_businessName || '') + '\nLocations: ' + (formData.slc_numLocations || '') +
+      '\n\nPlease reach out at your earliest convenience.'
+    );
+    el('slcContactLink').href = 'mailto:' + CONTACT_EMAIL + '?subject=' + subject + '&body=' + body;
+
     el('slcFormContainer').style.display = 'none';
-    el('slcHero').style.display = 'none';
+    el('slcHero').style.display          = 'none';
     el('slcResults').classList.add('active');
-    el('slcProgressFill').style.width = '100%';
+    el('slcProgressFill').style.width    = '100%';
 
     el('shelf-life-calc').scrollIntoView({ behavior: 'smooth' });
   }

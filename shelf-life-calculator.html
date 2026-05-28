@@ -387,62 +387,74 @@
   }
 
   /* ─── WORKER SUBMISSION ─────────────────────────────────────── */
-  function submitLead() {
-    return fetch(WORKER_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        businessName:  formData.slc_businessName,
-        numLocations:  formData.slc_numLocations,
-        email:         formData.slc_email,
-        phone:         formData.slc_phone
-      })
-    }).then(function (r) {
-      if (!r.ok) console.warn('[SLC] Lead submission failed:', r.status);
-    }).catch(function (err) {
-      console.warn('[SLC] Lead submission error:', err);
-    });
-  }
+function submitLead(payload) {
+  return fetch(WORKER_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function (r) {
+    if (!r.ok) console.warn('[SLC] Lead submission failed:', r.status);
+  }).catch(function (err) {
+    console.warn('[SLC] Lead submission error:', err);
+  });
+}
 
-  /* ─── NAVIGATION ────────────────────────────────────────────── */
+function submitContactCapture() {
+  return submitLead({
+    businessName: formData.slc_businessName,
+    numLocations: formData.slc_numLocations,
+    email:        formData.slc_email,
+    phone:        formData.slc_phone,
+    stage:        'contact_captured'
+  });
+}
+
+function submitCalculationComplete() {
+  return submitLead({
+    businessName: formData.slc_businessName,
+    numLocations: formData.slc_numLocations,
+    email:        formData.slc_email,
+    phone:        formData.slc_phone,
+    stage:        'calculation_complete'
+  });
+}
+
   window.slcNext = function () {
-    if (!validate()) return;
-    save();
+  if (!validate()) return;
+  save();
 
-    if (currentStep === 1) {
-      var btn = el('slcNextBtn');
-      btn.disabled = true;
-      btn.classList.add('loading');
-      btn.querySelector('.spinner').style.display = 'block';
+  if (currentStep === 1) {
+    var btn = el('slcNextBtn');
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.querySelector('.spinner').style.display = 'block';
 
-      submitLead().finally(function () {
-        btn.disabled = false;
-        btn.classList.remove('loading');
-        btn.querySelector('.spinner').style.display = 'none';
-        currentStep++;
-        renderQuestion(currentStep);
-      });
-    } else if (currentStep === questions.length) {
-      calculate();
-    } else {
+    submitContactCapture().finally(function () {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.querySelector('.spinner').style.display = 'none';
       currentStep++;
       renderQuestion(currentStep);
-    }
-  };
+    });
 
-  window.slcPrev = function () {
-    if (currentStep > 1) { save(); currentStep--; renderQuestion(currentStep); }
-  };
+  } else if (currentStep === questions.length) {
+    var btn2 = el('slcNextBtn');
+    btn2.disabled = true;
+    btn2.classList.add('loading');
+    btn2.querySelector('.spinner').style.display = 'block';
 
-  window.slcRestart = function () {
-    currentStep = 1;
-    formData    = {};
-    el('slcFormContainer').style.display = 'block';
-    el('slcHero').style.display          = 'block';
-    el('slcResults').classList.remove('active');
-    renderQuestion(1);
-    el('shelf-life-calc').scrollIntoView({ behavior: 'smooth' });
-  };
+    submitCalculationComplete().finally(function () {
+      btn2.disabled = false;
+      btn2.classList.remove('loading');
+      btn2.querySelector('.spinner').style.display = 'none';
+      calculate();
+    });
+
+  } else {
+    currentStep++;
+    renderQuestion(currentStep);
+  }
+};
 
   /* ─── CALCULATE ─────────────────────────────────────────────── */
   function calculate() {

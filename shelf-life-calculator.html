@@ -217,9 +217,9 @@
   var CONTACT_EMAIL = 'contact@qfresh.com';
   /* ──────────────────────────────────────────────────────────── */
 
-  var currentStep   = 1;
-  var formData      = {};
-  var airtableRecordId = null; // stored after first submission
+  var currentStep      = 1;
+  var formData         = {};
+  var airtableRecordId = null;
 
   var questions = [
     {
@@ -441,30 +441,28 @@
     var inventoryValueExtra = dailyFoodCost / (calcFields.currentShelfLife + 1);
     var annualInventory     = inventoryValueExtra * 365;
 
-    var hoursPerDay     = (calcFields.handlingTime * calcFields.dailySales) / 60;
-    var laborCostExtra  = (calcFields.laborRate * hoursPerDay) / (calcFields.currentShelfLife + 1);
-    var annualLabor     = laborCostExtra * 365;
+    var hoursPerDay    = (calcFields.handlingTime * calcFields.dailySales) / 60;
+    var laborCostExtra = (calcFields.laborRate * hoursPerDay) / (calcFields.currentShelfLife + 1);
+    var annualLabor    = laborCostExtra * 365;
 
-    var annualPackages  = calcFields.dailySales * 365;
-    var packagingDelta  = (calcFields.higherPrice - calcFields.lowerPrice) * annualPackages;
-
-    var totalSavings    = (annualInventory + annualLabor - packagingDelta) * calcFields.numLocations;
-    var perLocation     = annualInventory + annualLabor - packagingDelta;
+    var annualPackages = calcFields.dailySales * 365;
+    var packagingDelta = (calcFields.higherPrice - calcFields.lowerPrice) * annualPackages;
+    var perLocation    = annualInventory + annualLabor - packagingDelta;
 
     var fields = {
-      'Stage':                              'calculation_complete',
-      'Daily Sales (Packs/Location/Day)':   calcFields.dailySales,
-      'Turnover Share of Shelf':            calcFields.turnoverShare,
-      'Current Shelf Life (Days)':          calcFields.currentShelfLife,
-      'Cost of Food in Package':            calcFields.foodCost,
-      'Average Labor Rate Per Hour':        calcFields.laborRate,
-      'Time Handling 1 Package (minutes)':  calcFields.handlingTime,
-      'Higher Priced Package ($/Pack)':     calcFields.higherPrice,
-      'Lower Priced Package ($/Pack)':      calcFields.lowerPrice,
+      'Stage':                               'calculation_complete',
+      'Daily Sales (Packs/Location/Day)':    calcFields.dailySales,
+      'Turnover Share of Shelf':             calcFields.turnoverShare,
+      'Current Shelf Life (Days)':           calcFields.currentShelfLife,
+      'Cost of Food in Package':             calcFields.foodCost,
+      'Average Labor Rate Per Hour':         calcFields.laborRate,
+      'Time Handling 1 Package (minutes)':   calcFields.handlingTime,
+      'Higher Priced Package ($/Pack)':      calcFields.higherPrice,
+      'Lower Priced Package ($/Pack)':       calcFields.lowerPrice,
       'Total Annual Savings (Per Location)': parseFloat(perLocation.toFixed(2)),
-      'Inventory Savings':                  parseFloat((annualInventory * calcFields.numLocations).toFixed(2)),
-      'Labor Savings':                      parseFloat((annualLabor * calcFields.numLocations).toFixed(2)),
-      'Additional Packaging Cost':          parseFloat((packagingDelta * calcFields.numLocations).toFixed(2))
+      'Inventory Savings':                   parseFloat((annualInventory * calcFields.numLocations).toFixed(2)),
+      'Labor Savings':                       parseFloat((annualLabor * calcFields.numLocations).toFixed(2)),
+      'Additional Packaging Cost':           parseFloat((packagingDelta * calcFields.numLocations).toFixed(2))
     };
 
     if (airtableRecordId) {
@@ -478,22 +476,9 @@
     }
   }
 
-    if (airtableRecordId) {
-      return postToWorker('PATCH', fields, airtableRecordId);
-    } else {
-      // Fallback: no record ID stored, create a new record with all fields combined
-      fields['Business Name']       = formData.slc_businessName;
-      fields['Number of Locations'] = parseInt(formData.slc_numLocations) || 1;
-      fields['Email']               = formData.slc_email;
-      fields['Phone']               = formData.slc_phone;
-      return postToWorker('POST', fields, null);
-    }
-  }
-
   function submitContactOptIn() {
-    var fields = { 'Contact': true };
     if (airtableRecordId) {
-      return postToWorker('PATCH', fields, airtableRecordId);
+      return postToWorker('PATCH', { 'Contact': true }, airtableRecordId);
     }
     return Promise.resolve();
   }
@@ -526,7 +511,6 @@
 
     } else if (currentStep === questions.length) {
       setButtonLoading(btn, true);
-      // Calculate first so we have the values ready to send
       var calcFields = gatherCalcFields();
       submitCalculationComplete(calcFields).finally(function () {
         setButtonLoading(btn, false);
@@ -579,14 +563,13 @@
     var inventoryValueExtra = dailyFoodCost / (c.currentShelfLife + 1);
     var annualInventory     = inventoryValueExtra * 365;
 
-    var hoursPerDay     = (c.handlingTime * c.dailySales) / 60;
-    var laborCostExtra  = (c.laborRate * hoursPerDay) / (c.currentShelfLife + 1);
-    var annualLabor     = laborCostExtra * 365;
+    var hoursPerDay    = (c.handlingTime * c.dailySales) / 60;
+    var laborCostExtra = (c.laborRate * hoursPerDay) / (c.currentShelfLife + 1);
+    var annualLabor    = laborCostExtra * 365;
 
-    var annualPackages  = c.dailySales * 365;
-    var packagingDelta  = (c.higherPrice - c.lowerPrice) * annualPackages;
-
-    var totalSavings    = (annualInventory + annualLabor - packagingDelta) * c.numLocations;
+    var annualPackages = c.dailySales * 365;
+    var packagingDelta = (c.higherPrice - c.lowerPrice) * annualPackages;
+    var totalSavings   = (annualInventory + annualLabor - packagingDelta) * c.numLocations;
 
     var savingsEl = el('slcTotalSavings');
     var explEl    = el('slcResultsExplanation');
@@ -625,7 +608,6 @@
     );
     el('slcContactLink').href = 'mailto:' + CONTACT_EMAIL + '?subject=' + subject + '&body=' + body;
 
-    // Wire up opt-in checkbox
     var checkbox = el('slcQFreshOptIn');
     checkbox.checked = false;
     checkbox.addEventListener('change', function () {

@@ -85,6 +85,11 @@
 #shelf-life-calc .opt-in-row input[type="checkbox"] { width: 18px; height: 18px; min-width: 18px; margin-top: 2px; accent-color: var(--primary-orange); cursor: pointer; }
 #shelf-life-calc .opt-in-label { font-size: 0.88rem; color: var(--text-mid); cursor: pointer; line-height: 1.5; }
 #shelf-life-calc .opt-in-label strong { color: var(--text-dark); }
+#shelf-life-calc .opt-in-confirm { display: none; align-items: center; gap: 0.75rem; justify-content: center; margin: 0 auto 1.5rem; max-width: 480px; padding: 0.9rem 1.25rem; background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 6px; }
+#shelf-life-calc .opt-in-confirm.show { display: flex; }
+#shelf-life-calc .opt-in-confirm-icon { font-size: 1.2rem; flex-shrink: 0; }
+#shelf-life-calc .opt-in-confirm-text { font-size: 0.88rem; color: #276749; line-height: 1.5; text-align: left; }
+#shelf-life-calc .opt-in-confirm-text strong { display: block; margin-bottom: 0.15rem; }
 #shelf-life-calc .btn-primary { background: var(--primary-orange); color: var(--white); border: none; padding: 1rem 2.5rem; border-radius: 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-block; text-decoration: none; }
 #shelf-life-calc .btn-primary:hover { background: #e05a1a; transform: translateY(-2px); }
 #shelf-life-calc .restart-link { display: inline-block; margin-top: 1.5rem; color: var(--text-light); font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
@@ -183,11 +188,18 @@
       <div class="cta-section">
         <h3 style="margin-bottom:1rem;color:#231F20;">Ready to validate these results?</h3>
         <p style="color:#718096;margin-bottom:1.5rem;">Test first. Test always! Validate performance with your specific products before making packaging decisions.</p>
-        <div class="opt-in-row">
+        <div class="opt-in-row" id="slcOptInRow">
           <input type="checkbox" id="slcQFreshOptIn">
           <label class="opt-in-label" for="slcQFreshOptIn">
             <strong>Yes, I'd like QFresh to reach out with more information</strong> about packaging solutions that can extend my product's shelf life.
           </label>
+        </div>
+        <div class="opt-in-confirm" id="slcOptInConfirm">
+          <span class="opt-in-confirm-icon">&#10003;</span>
+          <span class="opt-in-confirm-text">
+            <strong>You're on our list.</strong>
+            A QFresh team member will be in touch within 48 business hours.
+          </span>
         </div>
         <a id="slcContactLink" href="#" class="btn-primary">Contact QFresh</a>
         <div class="restart-link" onclick="slcRestart()">Start Over</div>
@@ -204,6 +216,10 @@
   var WORKER_URL    = 'https://shelf-life-leads.jon-c0f.workers.dev';
   var CONTACT_EMAIL = 'contact@qfresh.com';
   /* ──────────────────────────────────────────────────────────── */
+
+  var currentStep   = 1;
+  var formData      = {};
+  var airtableRecordId = null; // stored after first submission
 
   var questions = [
     {
@@ -224,7 +240,7 @@
       text: "Tell us about your inventory",
       hint: "Per location averages",
       fields: [
-        { name: "slc_dailySales",       label: "Daily Sales (packs/location/day)", type: "number", required: true, placeholder: "12",   min: 0.1, step: 0.1 },
+        { name: "slc_dailySales",       label: "Daily Sales (packs/location/day)", type: "number", required: true, placeholder: "12",   min: 0.1,  step: 0.1 },
         { name: "slc_turnoverShare",    label: "Turnover Share of Shelf (%)",      type: "number", required: true, placeholder: "50",   min: 1, max: 100, description: "What percentage of your total inventory does this product represent? Example: If it\u2019s 25% of your shelf space or inventory value, enter 25." },
         { name: "slc_currentShelfLife", label: "Current Shelf Life (days)",        type: "number", required: true, placeholder: "8",    min: 1 },
         { name: "slc_foodCost",         label: "Cost of Food in Package ($)",      type: "number", required: true, placeholder: "3.00", min: 0.01, step: 0.01 }
@@ -251,9 +267,6 @@
       ]
     }
   ];
-
-  var currentStep = 1;
-  var formData    = {};
 
   function el(id) { return document.getElementById(id); }
 
@@ -387,54 +400,137 @@
   }
 
   /* ─── WORKER SUBMISSION ─────────────────────────────────────── */
-  function submitLead(stage) {
+  function postToWorker(method, fields, recordId) {
+    var payload = { fields: fields };
+    if (recordId) payload.recordId = recordId;
+
     return fetch(WORKER_URL, {
-      method:  'POST',
+      method:  method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        businessName: formData.slc_businessName,
-        numLocations: formData.slc_numLocations,
-        email:        formData.slc_email,
-        phone:        formData.slc_phone,
-        stage:        stage
-      })
+      body:    JSON.stringify(payload)
     }).then(function (r) {
-      if (!r.ok) console.warn('[SLC] Submission failed:', r.status);
+      if (!r.ok) {
+        console.warn('[SLC] Worker responded ' + r.status);
+        return null;
+      }
+      return r.json();
     }).catch(function (err) {
-      console.warn('[SLC] Submission error:', err);
+      console.warn('[SLC] Worker error:', err);
+      return null;
     });
   }
 
+  function submitContactCapture() {
+    return postToWorker('POST', {
+      'Business Name':       formData.slc_businessName,
+      'Number of Locations': parseInt(formData.slc_numLocations) || 1,
+      'Email':               formData.slc_email,
+      'Phone':               formData.slc_phone,
+      'Stage':               'contact_captured'
+    }).then(function (data) {
+      if (data && data.recordId) {
+        airtableRecordId = data.recordId;
+      }
+    });
+  }
+
+  function submitCalculationComplete(calcFields) {
+    var turnoverFraction    = calcFields.turnoverShare / 100;
+    var totalDailyInventory = calcFields.dailySales / turnoverFraction;
+    var dailyFoodCost       = calcFields.foodCost * totalDailyInventory;
+    var inventoryValueExtra = dailyFoodCost / (calcFields.currentShelfLife + 1);
+    var annualInventory     = inventoryValueExtra * 365;
+
+    var hoursPerDay     = (calcFields.handlingTime * calcFields.dailySales) / 60;
+    var laborCostExtra  = (calcFields.laborRate * hoursPerDay) / (calcFields.currentShelfLife + 1);
+    var annualLabor     = laborCostExtra * 365;
+
+    var annualPackages  = calcFields.dailySales * 365;
+    var packagingDelta  = (calcFields.higherPrice - calcFields.lowerPrice) * annualPackages;
+
+    var totalSavings    = (annualInventory + annualLabor - packagingDelta) * calcFields.numLocations;
+    var perLocation     = annualInventory + annualLabor - packagingDelta;
+
+    var fields = {
+      'Stage':                              'calculation_complete',
+      'Daily Sales (Packs/Location/Day)':   calcFields.dailySales,
+      'Turnover Share of Shelf':            calcFields.turnoverShare,
+      'Current Shelf Life (Days)':          calcFields.currentShelfLife,
+      'Cost of Food in Package':            calcFields.foodCost,
+      'Average Labor Rate Per Hour':        calcFields.laborRate,
+      'Time Handling 1 Package (minutes)':  calcFields.handlingTime,
+      'Higher Priced Package ($/Pack)':     calcFields.higherPrice,
+      'Lower Priced Package ($/Pack)':      calcFields.lowerPrice,
+      'Total Annual Savings (Per Location)': parseFloat(perLocation.toFixed(2)),
+      'Inventory Savings':                  parseFloat((annualInventory * calcFields.numLocations).toFixed(2)),
+      'Labor Savings':                      parseFloat((annualLabor * calcFields.numLocations).toFixed(2)),
+      'Additional Packaging Cost':          parseFloat((packagingDelta * calcFields.numLocations).toFixed(2))
+    };
+
+    if (airtableRecordId) {
+      return postToWorker('PATCH', fields, airtableRecordId);
+    } else {
+      fields['Business Name']       = formData.slc_businessName;
+      fields['Number of Locations'] = parseInt(formData.slc_numLocations) || 1;
+      fields['Email']               = formData.slc_email;
+      fields['Phone']               = formData.slc_phone;
+      return postToWorker('POST', fields, null);
+    }
+  }
+
+    if (airtableRecordId) {
+      return postToWorker('PATCH', fields, airtableRecordId);
+    } else {
+      // Fallback: no record ID stored, create a new record with all fields combined
+      fields['Business Name']       = formData.slc_businessName;
+      fields['Number of Locations'] = parseInt(formData.slc_numLocations) || 1;
+      fields['Email']               = formData.slc_email;
+      fields['Phone']               = formData.slc_phone;
+      return postToWorker('POST', fields, null);
+    }
+  }
+
+  function submitContactOptIn() {
+    var fields = { 'Contact': true };
+    if (airtableRecordId) {
+      return postToWorker('PATCH', fields, airtableRecordId);
+    }
+    return Promise.resolve();
+  }
+
   /* ─── NAVIGATION ────────────────────────────────────────────── */
+  function setButtonLoading(btn, loading) {
+    btn.disabled = loading;
+    if (loading) {
+      btn.classList.add('loading');
+      btn.querySelector('.spinner').style.display = 'block';
+    } else {
+      btn.classList.remove('loading');
+      btn.querySelector('.spinner').style.display = 'none';
+    }
+  }
+
   window.slcNext = function () {
     if (!validate()) return;
     save();
 
-    if (currentStep === 1) {
-      var btn = el('slcNextBtn');
-      btn.disabled = true;
-      btn.classList.add('loading');
-      btn.querySelector('.spinner').style.display = 'block';
+    var btn = el('slcNextBtn');
 
-      submitLead('contact_captured').finally(function () {
-        btn.disabled = false;
-        btn.classList.remove('loading');
-        btn.querySelector('.spinner').style.display = 'none';
+    if (currentStep === 1) {
+      setButtonLoading(btn, true);
+      submitContactCapture().finally(function () {
+        setButtonLoading(btn, false);
         currentStep++;
         renderQuestion(currentStep);
       });
 
     } else if (currentStep === questions.length) {
-      var btn2 = el('slcNextBtn');
-      btn2.disabled = true;
-      btn2.classList.add('loading');
-      btn2.querySelector('.spinner').style.display = 'block';
-
-      submitLead('calculation_complete').finally(function () {
-        btn2.disabled = false;
-        btn2.classList.remove('loading');
-        btn2.querySelector('.spinner').style.display = 'none';
-        calculate();
+      setButtonLoading(btn, true);
+      // Calculate first so we have the values ready to send
+      var calcFields = gatherCalcFields();
+      submitCalculationComplete(calcFields).finally(function () {
+        setButtonLoading(btn, false);
+        renderResults(calcFields);
       });
 
     } else {
@@ -448,40 +544,49 @@
   };
 
   window.slcRestart = function () {
-    currentStep = 1;
-    formData    = {};
+    currentStep      = 1;
+    formData         = {};
+    airtableRecordId = null;
     el('slcFormContainer').style.display = 'block';
     el('slcHero').style.display          = 'block';
     el('slcResults').classList.remove('active');
+    el('slcOptInRow').style.display      = 'flex';
+    el('slcOptInConfirm').classList.remove('show');
+    el('slcQFreshOptIn').checked         = false;
     renderQuestion(1);
     el('shelf-life-calc').scrollIntoView({ behavior: 'smooth' });
   };
 
-  /* ─── CALCULATE ─────────────────────────────────────────────── */
-  function calculate() {
-    var dailySales       = parseFloat(formData.slc_dailySales);
-    var turnoverShare    = parseFloat(formData.slc_turnoverShare) / 100;
-    var currentShelfLife = parseFloat(formData.slc_currentShelfLife);
-    var foodCost         = parseFloat(formData.slc_foodCost);
-    var laborRate        = parseFloat(formData.slc_laborRate);
-    var handlingTime     = parseFloat(formData.slc_handlingTime);
-    var higherPrice      = parseFloat(formData.slc_higherPricePackage);
-    var lowerPrice       = parseFloat(formData.slc_lowerPricePackage);
-    var numLocations     = parseInt(formData.slc_numLocations);
+  /* ─── CALCULATION ───────────────────────────────────────────── */
+  function gatherCalcFields() {
+    return {
+      dailySales:       parseFloat(formData.slc_dailySales),
+      turnoverShare:    parseFloat(formData.slc_turnoverShare),
+      currentShelfLife: parseFloat(formData.slc_currentShelfLife),
+      foodCost:         parseFloat(formData.slc_foodCost),
+      laborRate:        parseFloat(formData.slc_laborRate),
+      handlingTime:     parseFloat(formData.slc_handlingTime),
+      higherPrice:      parseFloat(formData.slc_higherPricePackage),
+      lowerPrice:       parseFloat(formData.slc_lowerPricePackage),
+      numLocations:     parseInt(formData.slc_numLocations)
+    };
+  }
 
-    var totalDailyInventory    = dailySales / turnoverShare;
-    var dailyFoodCost          = foodCost * totalDailyInventory;
-    var inventoryValueExtra    = dailyFoodCost / (currentShelfLife + 1);
-    var annualInventorySavings = inventoryValueExtra * 365;
+  function renderResults(c) {
+    var turnoverFraction    = c.turnoverShare / 100;
+    var totalDailyInventory = c.dailySales / turnoverFraction;
+    var dailyFoodCost       = c.foodCost * totalDailyInventory;
+    var inventoryValueExtra = dailyFoodCost / (c.currentShelfLife + 1);
+    var annualInventory     = inventoryValueExtra * 365;
 
-    var hoursPerDay        = (handlingTime * dailySales) / 60;
-    var laborCostExtra     = (laborRate * hoursPerDay) / (currentShelfLife + 1);
-    var annualLaborSavings = laborCostExtra * 365;
+    var hoursPerDay     = (c.handlingTime * c.dailySales) / 60;
+    var laborCostExtra  = (c.laborRate * hoursPerDay) / (c.currentShelfLife + 1);
+    var annualLabor     = laborCostExtra * 365;
 
-    var annualPackageSales = dailySales * 365;
-    var packagingCostDelta = (higherPrice - lowerPrice) * annualPackageSales;
+    var annualPackages  = c.dailySales * 365;
+    var packagingDelta  = (c.higherPrice - c.lowerPrice) * annualPackages;
 
-    var totalSavings = (annualInventorySavings + annualLaborSavings - packagingCostDelta) * numLocations;
+    var totalSavings    = (annualInventory + annualLabor - packagingDelta) * c.numLocations;
 
     var savingsEl = el('slcTotalSavings');
     var explEl    = el('slcResultsExplanation');
@@ -500,17 +605,17 @@
       explEl.style.borderLeftColor = '#e53e3e';
     }
 
-    el('slcInventorySavings').textContent = fmt(annualInventorySavings * numLocations);
-    el('slcLaborSavings').textContent     = fmt(annualLaborSavings * numLocations);
-    el('slcPackagingCost').textContent    = fmt(packagingCostDelta * numLocations);
+    el('slcInventorySavings').textContent = fmt(annualInventory * c.numLocations);
+    el('slcLaborSavings').textContent     = fmt(annualLabor * c.numLocations);
+    el('slcPackagingCost').textContent    = fmt(packagingDelta * c.numLocations);
 
-    el('slcDetailDailySales').textContent  = dailySales.toFixed(1);
+    el('slcDetailDailySales').textContent  = c.dailySales.toFixed(1);
     el('slcDetailInventory').textContent   = totalDailyInventory.toFixed(1) + ' packs';
-    el('slcDetailShelfLife').textContent   = currentShelfLife + ' days';
+    el('slcDetailShelfLife').textContent   = c.currentShelfLife + ' days';
     el('slcDetailFoodCost').textContent    = '$' + dailyFoodCost.toFixed(2);
     el('slcDetailLaborHours').textContent  = hoursPerDay.toFixed(2) + ' hours';
-    el('slcDetailAnnualSales').textContent = annualPackageSales.toLocaleString('en-US');
-    el('slcPerLocationText').textContent   = numLocations === 1 ? 'Per location' : 'Across ' + numLocations + ' locations';
+    el('slcDetailAnnualSales').textContent = annualPackages.toLocaleString('en-US');
+    el('slcPerLocationText').textContent   = c.numLocations === 1 ? 'Per location' : 'Across ' + c.numLocations + ' locations';
 
     var subject = 'Shelf Life ROI Results \u2014 ' + encodeURIComponent(formData.slc_businessName || 'Inquiry');
     var body    = encodeURIComponent(
@@ -519,6 +624,16 @@
       '\n\nPlease reach out at your earliest convenience.'
     );
     el('slcContactLink').href = 'mailto:' + CONTACT_EMAIL + '?subject=' + subject + '&body=' + body;
+
+    // Wire up opt-in checkbox
+    var checkbox = el('slcQFreshOptIn');
+    checkbox.checked = false;
+    checkbox.addEventListener('change', function () {
+      if (!checkbox.checked) return;
+      submitContactOptIn();
+      el('slcOptInRow').style.display = 'none';
+      el('slcOptInConfirm').classList.add('show');
+    });
 
     el('slcFormContainer').style.display = 'none';
     el('slcHero').style.display          = 'none';

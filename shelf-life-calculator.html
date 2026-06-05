@@ -94,6 +94,44 @@
 #shelf-life-calc .btn-primary:hover { background: #e05a1a; transform: translateY(-2px); }
 #shelf-life-calc .restart-link { display: inline-block; margin-top: 1.5rem; color: var(--text-light); font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
 #shelf-life-calc .restart-link:hover { color: var(--primary-orange); }
+
+/* ─── RATE LIMIT MODAL ──────────────────────────────────────── */
+#slcModalBackdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(35, 31, 32, 0.55);
+  z-index: 9000;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  backdrop-filter: blur(2px);
+  animation: slcFadeIn 0.2s ease-out;
+}
+#slcModalBackdrop.active { display: flex; }
+@keyframes slcFadeIn { from { opacity: 0; } to { opacity: 1; } }
+#slcModalBox {
+  background: #fff;
+  border-radius: 10px;
+  padding: clamp(2rem, 5vw, 3rem);
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  text-align: center;
+  animation: slcSlideUp 0.25s ease-out;
+}
+@keyframes slcSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+#slcModalBox .modal-icon { font-size: 2.2rem; margin-bottom: 1rem; }
+#slcModalBox .modal-headline { font-size: 1.35rem; font-weight: 500; color: #231F20; margin-bottom: 0.75rem; line-height: 1.2; }
+#slcModalBox .modal-body { font-size: 0.92rem; color: #718096; line-height: 1.7; margin-bottom: 1rem; }
+#slcModalBox .modal-body strong { color: #2d3748; }
+#slcModalBox .modal-countdown { display: inline-block; font-size: 0.8rem; color: #a0aec0; background: #f7fafc; border-radius: 4px; padding: 0.4rem 0.9rem; margin-bottom: 1.5rem; font-variant-numeric: tabular-nums; }
+#slcModalBox .modal-actions { display: flex; flex-direction: column; gap: 0.75rem; align-items: center; }
+#slcModalBox .btn-modal-contact { background: #F26F22; color: #fff; border: none; padding: 0.8rem 2rem; border-radius: 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 0.92rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.15s; }
+#slcModalBox .btn-modal-contact:hover { background: #e05a1a; }
+#slcModalBox .btn-modal-dismiss { background: none; border: none; color: #a0aec0; font-size: 0.82rem; cursor: pointer; text-decoration: underline; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+#slcModalBox .btn-modal-dismiss:hover { color: #718096; }
+
 @media (max-width: 600px) {
   #shelf-life-calc .field-row { grid-template-columns: 1fr; }
   #shelf-life-calc .breakdown-grid { grid-template-columns: 1fr; }
@@ -104,10 +142,30 @@
   #shelf-life-calc .form-container,
   #shelf-life-calc .cta-section,
   #shelf-life-calc .restart-link,
-  #shelf-life-calc .print-notice { display: none !important; }
+  #shelf-life-calc .print-notice,
+  #slcModalBackdrop { display: none !important; }
   #shelf-life-calc .results-section { display: block !important; padding: 1rem 0; }
 }
 </style>
+
+<!-- Rate limit modal — lives outside the calculator section so it overlays everything -->
+<div id="slcModalBackdrop">
+  <div id="slcModalBox">
+    <div class="modal-icon">&#9203;</div>
+    <h2 class="modal-headline">You've reached the submission limit</h2>
+    <p class="modal-body">
+      To keep this tool fair and accurate for everyone, we limit calculator use to
+      <strong>3 submissions per 2-hour window</strong> per email address.
+      If you need to run more scenarios or have questions about your results,
+      our team is glad to help directly.
+    </p>
+    <div class="modal-countdown" id="slcModalCountdown">Available again in 2:00:00</div>
+    <div class="modal-actions">
+      <a href="mailto:contact@martechconsulting.io" class="btn-modal-contact">Talk to the QFresh Team</a>
+      <button class="btn-modal-dismiss" onclick="slcDismissModal()">Dismiss</button>
+    </div>
+  </div>
+</div>
 
 <div id="shelf-life-calc">
 
@@ -215,11 +273,113 @@
   /* ─── CONFIGURATION ─────────────────────────────────────────── */
   var WORKER_URL    = 'https://shelf-life-leads.jon-c0f.workers.dev';
   var CONTACT_EMAIL = 'contact@martechconsulting.io';
+  var DAILY_LIMIT   = 3;
+  var WINDOW_MS     = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+  var LS_KEY        = 'slc_submissions';
   /* ──────────────────────────────────────────────────────────── */
 
   var currentStep      = 1;
   var formData         = {};
   var airtableRecordId = null;
+  var countdownTimer   = null;
+
+  /* ─── RATE LIMIT: ROLLING 2-HOUR WINDOW ────────────────────── */
+  // Storage format: { "email@example.com": [timestamp, timestamp, ...], ... }
+  // Timestamps are ms since epoch. On each check we prune entries older than 2 hours.
+
+  function getStoredSubmissions() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveStoredSubmissions(data) {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch (e) {}
+  }
+
+  function pruneAndGet(email) {
+    var stored  = getStoredSubmissions();
+    var key     = email.toLowerCase().trim();
+    var now     = Date.now();
+    var entries = stored[key] || [];
+    // Keep only timestamps within the last 2 hours
+    entries = entries.filter(function (ts) { return now - ts < WINDOW_MS; });
+    stored[key] = entries;
+    saveStoredSubmissions(stored);
+    return entries;
+  }
+
+  function recordSubmission(email) {
+    var stored  = getStoredSubmissions();
+    var key     = email.toLowerCase().trim();
+    var entries = pruneAndGet(email); // already pruned
+    entries.push(Date.now());
+    stored[key] = entries;
+    saveStoredSubmissions(stored);
+  }
+
+  function isClientRateLimited(email) {
+    var entries = pruneAndGet(email);
+    return entries.length >= DAILY_LIMIT;
+  }
+
+  // Returns ms until the oldest submission in the window expires
+  function msUntilUnblocked(email) {
+    var entries = pruneAndGet(email);
+    if (entries.length < DAILY_LIMIT) return 0;
+    var oldest = Math.min.apply(null, entries);
+    return Math.max(0, oldest + WINDOW_MS - Date.now());
+  }
+
+  /* ─── MODAL ─────────────────────────────────────────────────── */
+  function formatCountdown(ms) {
+    var totalSec = Math.ceil(ms / 1000);
+    var h        = Math.floor(totalSec / 3600);
+    var m        = Math.floor((totalSec % 3600) / 60);
+    var s        = totalSec % 60;
+    return (h > 0 ? h + ':' : '') +
+           (h > 0 ? String(m).padStart(2, '0') : m) + ':' +
+           String(s).padStart(2, '0');
+  }
+
+  function showRateLimitModal(email) {
+    var backdrop  = document.getElementById('slcModalBackdrop');
+    var countdown = document.getElementById('slcModalCountdown');
+    backdrop.classList.add('active');
+
+    // Clear any existing timer
+    if (countdownTimer) clearInterval(countdownTimer);
+
+    function tick() {
+      var remaining = msUntilUnblocked(email);
+      if (remaining <= 0) {
+        countdown.textContent = 'You can try again now.';
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+      } else {
+        countdown.textContent = 'Available again in ' + formatCountdown(remaining);
+      }
+    }
+
+    tick();
+    countdownTimer = setInterval(tick, 1000);
+  }
+
+  window.slcDismissModal = function () {
+    document.getElementById('slcModalBackdrop').classList.remove('active');
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = null;
+  };
+
+  // Close on backdrop click
+  document.getElementById('slcModalBackdrop').addEventListener('click', function (e) {
+    if (e.target === this) window.slcDismissModal();
+  });
+
+  /* ──────────────────────────────────────────────────────────── */
 
   var questions = [
     {
@@ -443,6 +603,8 @@
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload)
     }).then(function (r) {
+      // Check 429 BEFORE the generic !r.ok check so it is not swallowed
+      if (r.status === 429) return { rateLimited: true };
       if (!r.ok) {
         console.warn('[SLC] Worker responded ' + r.status);
         return null;
@@ -462,9 +624,13 @@
       'Phone':               formData.slc_phone,
       'Stage':               'contact_captured'
     }).then(function (data) {
+      if (data && data.rateLimited) return { rateLimited: true };
       if (data && data.recordId) {
         airtableRecordId = data.recordId;
+        // Only record locally after the Worker confirms the record was created
+        recordSubmission(formData.slc_email);
       }
+      return data;
     });
   }
 
@@ -533,12 +699,25 @@
     if (!validate()) return;
     save();
 
-    var btn = el('slcNextBtn');
+    var btn   = el('slcNextBtn');
+    var email = formData.slc_email;
 
     if (currentStep === 1) {
+      // Client-side gate: check before hitting the Worker
+      if (isClientRateLimited(email)) {
+        showRateLimitModal(email);
+        return;
+      }
+
       setButtonLoading(btn, true);
-      submitContactCapture().finally(function () {
+      submitContactCapture().then(function (data) {
         setButtonLoading(btn, false);
+        if (data && data.rateLimited) {
+          // Worker confirmed block -- record locally so client gate fires next time
+          recordSubmission(email);
+          showRateLimitModal(email);
+          return;
+        }
         currentStep++;
         renderQuestion(currentStep);
       });
@@ -634,7 +813,7 @@
     el('slcDetailAnnualSales').textContent = annualPackages.toLocaleString('en-US');
     el('slcPerLocationText').textContent   = c.numLocations === 1 ? 'Per location' : 'Across ' + c.numLocations + ' locations';
 
-    el('slcContactLink').href = 'mailto:jbrandenburg@jsbgroup.com';
+    el('slcContactLink').href = 'mailto:contact@martechconsulting.io';
 
     var checkbox = el('slcQFreshOptIn');
     checkbox.checked = false;

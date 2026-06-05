@@ -120,7 +120,7 @@
       <div class="slc-container--narrow">
         <p class="eyebrow">ROI Calculator</p>
         <h2 class="display">How Much Is One Extra Day of <em>Shelf Life</em> Worth?</h2>
-        <p class="calc-hero__sub">For decades, packaging has played a critical role in extending the shelf life of fresh products. Even one additional day can significantly reduce shrink, improve sell-through, and protect margins. Answer four quick questions to find out what it's worth for your operation. We'll send your results to your inbox.</p>
+        <p class="calc-hero__sub">Even one additional day of Shelf-life can significantly reduce shrink, improve sell-through, and protect margins. Find out what it's worth for your business.</p>
       </div>
     </div>
   </section>
@@ -201,7 +201,7 @@
             A QFresh team member will be in touch within 48 business hours.
           </span>
         </div>
-        <a id="slcContactLink" href="#" class="btn-primary">Contact QFresh</a>
+        <a id="slcContactLink" href="mailto:contact@martechconsulting.io" class="btn-primary">Contact Us</a>
         <div class="restart-link" onclick="slcRestart()">Start Over</div>
       </div>
     </div>
@@ -214,7 +214,7 @@
 
   /* ─── CONFIGURATION ─────────────────────────────────────────── */
   var WORKER_URL    = 'https://shelf-life-leads.jon-c0f.workers.dev';
-  var CONTACT_EMAIL = 'contact@qfresh.com';
+  var CONTACT_EMAIL = 'contact@martechconsulting.io';
   /* ──────────────────────────────────────────────────────────── */
 
   var currentStep      = 1;
@@ -275,12 +275,19 @@
   }
 
   function isValidEmail(v) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+    return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(v.trim());
   }
 
   function isValidPhone(v) {
-    var digits = v.replace(/\D/g, '');
-    return digits.length >= 10 && digits.length <= 15;
+    return /^\(\d{3}\) \d{3}-\d{4}$/.test(v.trim());
+  }
+
+  function formatPhone(v) {
+    var digits = v.replace(/\D/g, '').slice(0, 10);
+    if (digits.length === 0) return '';
+    if (digits.length <= 3) return '(' + digits;
+    if (digits.length <= 6) return '(' + digits.slice(0, 3) + ') ' + digits.slice(3);
+    return '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6);
   }
 
   /* ─── RENDER ────────────────────────────────────────────────── */
@@ -338,6 +345,33 @@
     if (field.description) html += '<div class="field-description">' + field.description + '</div>';
     html += '<div class="error-msg" id="' + field.name + '-error"></div>';
     html += '</div>';
+
+    if (field.type === 'tel') {
+      setTimeout(function () {
+        var input = document.getElementById(field.name);
+        if (!input) return;
+        input.addEventListener('input', function () {
+          var pos    = input.selectionStart;
+          var before = input.value.length;
+          input.value = formatPhone(input.value);
+          var after  = input.value.length;
+          input.selectionStart = input.selectionEnd = Math.max(0, pos + (after - before));
+        });
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Backspace') {
+            var val = input.value;
+            var cur = input.selectionStart;
+            if (cur === val.length && /[\s\-\(\)]/.test(val[cur - 1])) {
+              e.preventDefault();
+              input.value = formatPhone(val.slice(0, cur - 2));
+              var end = input.value.length;
+              input.selectionStart = input.selectionEnd = end;
+            }
+          }
+        });
+      }, 0);
+    }
+
     return html;
   }
 
@@ -365,7 +399,7 @@
           setError(input, errEl, 'Please enter a valid email address.');
           valid = false;
         } else if (field.validate === 'phone' && !isValidPhone(val)) {
-          setError(input, errEl, 'Please enter a valid phone number (at least 10 digits).');
+          setError(input, errEl, 'Please enter a valid phone number.');
           valid = false;
         } else if (field.type === 'number') {
           var num = parseFloat(val);
@@ -578,13 +612,13 @@
       savingsEl.textContent = fmt(totalSavings);
       savingsEl.style.color = 'var(--primary-green)';
       el('slcResultsHeadline').textContent = 'Total Annual Savings';
-      explEl.textContent = 'By extending shelf life by one day, you save more on inventory and labor costs than the additional packaging costs. The higher shelf life packaging is worth the investment.';
+      explEl.textContent = 'By extending shelf life by one day, you save more on inventory and labor costs to more than offset any additional packaging costs. Make sure you evaluate the total cost of your product, not just the packaging cost in isolation.';
       explEl.style.borderLeftColor = 'var(--primary-green)';
     } else {
       savingsEl.textContent = '-' + fmt(totalSavings);
       savingsEl.style.color = '#e53e3e';
       el('slcResultsHeadline').textContent = 'Net Annual Cost';
-      explEl.textContent = 'The additional packaging cost exceeds the savings from one extra day of shelf life. With your current numbers, the higher-priced packaging would cost you more than you would save in reduced inventory and labor.';
+      explEl.textContent = 'The additional packaging cost exceeds the savings from one extra day of shelf life. Make sure you evaluate the total cost of your product, not just the packaging cost in isolation.';
       explEl.style.borderLeftColor = '#e53e3e';
     }
 
@@ -600,13 +634,7 @@
     el('slcDetailAnnualSales').textContent = annualPackages.toLocaleString('en-US');
     el('slcPerLocationText').textContent   = c.numLocations === 1 ? 'Per location' : 'Across ' + c.numLocations + ' locations';
 
-    var subject = 'Shelf Life ROI Results \u2014 ' + encodeURIComponent(formData.slc_businessName || 'Inquiry');
-    var body    = encodeURIComponent(
-      'Hi QFresh,\n\nI just ran the Shelf Life ROI Calculator and would like to learn more about your packaging solutions.\n\nBusiness: ' +
-      (formData.slc_businessName || '') + '\nLocations: ' + (formData.slc_numLocations || '') +
-      '\n\nPlease reach out at your earliest convenience.'
-    );
-    el('slcContactLink').href = 'mailto:' + CONTACT_EMAIL + '?subject=' + subject + '&body=' + body;
+    el('slcContactLink').href = 'mailto:jbrandenburg@jsbgroup.com';
 
     var checkbox = el('slcQFreshOptIn');
     checkbox.checked = false;

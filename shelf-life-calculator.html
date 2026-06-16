@@ -90,8 +90,6 @@
 #shelf-life-calc .opt-in-confirm-icon { font-size: 1.2rem; flex-shrink: 0; }
 #shelf-life-calc .opt-in-confirm-text { font-size: 0.88rem; color: #276749; line-height: 1.5; text-align: left; }
 #shelf-life-calc .opt-in-confirm-text strong { display: block; margin-bottom: 0.15rem; }
-#shelf-life-calc .btn-primary { background: var(--primary-orange); color: var(--white); border: none; padding: 1rem 2.5rem; border-radius: 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-block; text-decoration: none; }
-#shelf-life-calc .btn-primary:hover { background: #e05a1a; transform: translateY(-2px); }
 #shelf-life-calc .restart-link { display: inline-block; margin-top: 1.5rem; color: var(--text-light); font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
 #shelf-life-calc .restart-link:hover { color: var(--primary-orange); }
 
@@ -161,7 +159,7 @@
     </p>
     <div class="modal-countdown" id="slcModalCountdown">Available again in 2:00:00</div>
     <div class="modal-actions">
-      <a href="mailto:contact@martechconsulting.io" class="btn-modal-contact">Talk to the QFresh Team</a>
+      <a href="mailto:jbrandenburg@jsbgroup.com" class="btn-modal-contact">Talk to the QFresh Team</a>
       <button class="btn-modal-dismiss" onclick="slcDismissModal()">Dismiss</button>
     </div>
   </div>
@@ -259,7 +257,6 @@
             A QFresh team member will be in touch within 48 business hours.
           </span>
         </div>
-        <a id="slcContactLink" href="mailto:contact@martechconsulting.io" class="btn-primary">Contact Us</a>
         <div class="restart-link" onclick="slcRestart()">Start Over</div>
       </div>
     </div>
@@ -272,9 +269,9 @@
 
   /* ─── CONFIGURATION ─────────────────────────────────────────── */
   var WORKER_URL    = 'https://shelf-life-leads.jon-c0f.workers.dev';
-  var CONTACT_EMAIL = 'contact@martechconsulting.io';
+  var CONTACT_EMAIL = 'jbrandenburg@jsbgroup.com';
   var DAILY_LIMIT   = 3;
-  var WINDOW_MS     = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+  var WINDOW_MS     = 2 * 60 * 60 * 1000;
   var LS_KEY        = 'slc_submissions';
   /* ──────────────────────────────────────────────────────────── */
 
@@ -382,10 +379,10 @@
       hint: "We\u2019ll use this to send you a copy of your results. Your information is never shared or sold.",
       fields: [
         { name: "slc_fullName",     label: "Full Name",           type: "text",   required: true, placeholder: "Jane Smith" },
-        { name: "slc_businessName", label: "Business Name",       type: "text",   required: true, placeholder: "Your Company Name" },
-        { name: "slc_numLocations", label: "Number of Locations", type: "number", required: true, placeholder: "1", min: 1 },
         { name: "slc_email",        label: "Business Email",      type: "email",  required: true, placeholder: "you@yourcompany.com", validate: "email" },
-        { name: "slc_phone",        label: "Phone Number",        type: "tel",    required: true, placeholder: "(555) 555-5555",      validate: "phone" }
+        { name: "slc_phone",        label: "Phone Number",        type: "tel",    required: true, placeholder: "(555) 555-5555",      validate: "phone" },
+        { name: "slc_businessName", label: "Business Name",       type: "text",   required: true, placeholder: "Your Company Name" },
+        { name: "slc_numLocations", label: "Number of Locations", type: "number", required: true, placeholder: "1", min: 1 }
       ]
     },
     {
@@ -451,13 +448,13 @@
     var html   = '';
 
     if (step === 1) {
-      // Row 1: Full Name + Business Name
-      // Row 2: Number of Locations + Email
-      // Row 3: Phone (full width)
+      // Row 1: Full Name (full width)
+      // Row 2: Email + Phone
+      // Row 3: Business Name + Number of Locations
       html += '<div class="field-stack">';
-      html += '<div class="field-row">' + buildField(fields[0]) + buildField(fields[1]) + '</div>';
-      html += '<div class="field-row">' + buildField(fields[2]) + buildField(fields[3]) + '</div>';
-      html += buildField(fields[4]);
+      html += buildField(fields[0]);
+      html += '<div class="field-row">' + buildField(fields[1]) + buildField(fields[2]) + '</div>';
+      html += '<div class="field-row">' + buildField(fields[3]) + buildField(fields[4]) + '</div>';
       html += '</div>';
     } else if (fields.length === 4) {
       html += '<div class="field-stack">';
@@ -808,8 +805,6 @@
     el('slcDetailLaborHours').textContent  = hoursPerDay.toFixed(2) + ' hours';
     el('slcDetailAnnualSales').textContent = annualPackages.toLocaleString('en-US');
     el('slcPerLocationText').textContent   = c.numLocations === 1 ? 'Per location' : 'Across ' + c.numLocations + ' locations';
-
-    el('slcContactLink').href = 'mailto:contact@martechconsulting.io';
 
     var checkbox = el('slcQFreshOptIn');
     checkbox.checked = false;

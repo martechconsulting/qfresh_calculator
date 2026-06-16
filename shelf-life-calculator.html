@@ -284,9 +284,6 @@
   var countdownTimer   = null;
 
   /* ─── RATE LIMIT: ROLLING 2-HOUR WINDOW ────────────────────── */
-  // Storage format: { "email@example.com": [timestamp, timestamp, ...], ... }
-  // Timestamps are ms since epoch. On each check we prune entries older than 2 hours.
-
   function getStoredSubmissions() {
     try {
       var raw = localStorage.getItem(LS_KEY);
@@ -305,7 +302,6 @@
     var key     = email.toLowerCase().trim();
     var now     = Date.now();
     var entries = stored[key] || [];
-    // Keep only timestamps within the last 2 hours
     entries = entries.filter(function (ts) { return now - ts < WINDOW_MS; });
     stored[key] = entries;
     saveStoredSubmissions(stored);
@@ -315,7 +311,7 @@
   function recordSubmission(email) {
     var stored  = getStoredSubmissions();
     var key     = email.toLowerCase().trim();
-    var entries = pruneAndGet(email); // already pruned
+    var entries = pruneAndGet(email);
     entries.push(Date.now());
     stored[key] = entries;
     saveStoredSubmissions(stored);
@@ -326,7 +322,6 @@
     return entries.length >= DAILY_LIMIT;
   }
 
-  // Returns ms until the oldest submission in the window expires
   function msUntilUnblocked(email) {
     var entries = pruneAndGet(email);
     if (entries.length < DAILY_LIMIT) return 0;
@@ -350,7 +345,6 @@
     var countdown = document.getElementById('slcModalCountdown');
     backdrop.classList.add('active');
 
-    // Clear any existing timer
     if (countdownTimer) clearInterval(countdownTimer);
 
     function tick() {
@@ -374,7 +368,6 @@
     countdownTimer = null;
   };
 
-  // Close on backdrop click
   document.getElementById('slcModalBackdrop').addEventListener('click', function (e) {
     if (e.target === this) window.slcDismissModal();
   });
@@ -388,6 +381,7 @@
       text: "Let\u2019s start with your contact information",
       hint: "We\u2019ll use this to send you a copy of your results. Your information is never shared or sold.",
       fields: [
+        { name: "slc_fullName",     label: "Full Name",           type: "text",   required: true, placeholder: "Jane Smith" },
         { name: "slc_businessName", label: "Business Name",       type: "text",   required: true, placeholder: "Your Company Name" },
         { name: "slc_numLocations", label: "Number of Locations", type: "number", required: true, placeholder: "1", min: 1 },
         { name: "slc_email",        label: "Business Email",      type: "email",  required: true, placeholder: "you@yourcompany.com", validate: "email" },
@@ -457,9 +451,13 @@
     var html   = '';
 
     if (step === 1) {
+      // Row 1: Full Name + Business Name
+      // Row 2: Number of Locations + Email
+      // Row 3: Phone (full width)
       html += '<div class="field-stack">';
       html += '<div class="field-row">' + buildField(fields[0]) + buildField(fields[1]) + '</div>';
       html += '<div class="field-row">' + buildField(fields[2]) + buildField(fields[3]) + '</div>';
+      html += buildField(fields[4]);
       html += '</div>';
     } else if (fields.length === 4) {
       html += '<div class="field-stack">';
@@ -603,7 +601,6 @@
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload)
     }).then(function (r) {
-      // Check 429 BEFORE the generic !r.ok check so it is not swallowed
       if (r.status === 429) return { rateLimited: true };
       if (!r.ok) {
         console.warn('[SLC] Worker responded ' + r.status);
@@ -618,6 +615,7 @@
 
   function submitContactCapture() {
     return postToWorker('POST', {
+      'Name':                formData.slc_fullName,
       'Business Name':       formData.slc_businessName,
       'Number of Locations': parseInt(formData.slc_numLocations) || 1,
       'Email':               formData.slc_email,
@@ -627,7 +625,6 @@
       if (data && data.rateLimited) return { rateLimited: true };
       if (data && data.recordId) {
         airtableRecordId = data.recordId;
-        // Only record locally after the Worker confirms the record was created
         recordSubmission(formData.slc_email);
       }
       return data;
@@ -668,6 +665,7 @@
     if (airtableRecordId) {
       return postToWorker('PATCH', fields, airtableRecordId);
     } else {
+      fields['Name']                = formData.slc_fullName;
       fields['Business Name']       = formData.slc_businessName;
       fields['Number of Locations'] = parseInt(formData.slc_numLocations) || 1;
       fields['Email']               = formData.slc_email;
@@ -703,7 +701,6 @@
     var email = formData.slc_email;
 
     if (currentStep === 1) {
-      // Client-side gate: check before hitting the Worker
       if (isClientRateLimited(email)) {
         showRateLimitModal(email);
         return;
@@ -713,7 +710,6 @@
       submitContactCapture().then(function (data) {
         setButtonLoading(btn, false);
         if (data && data.rateLimited) {
-          // Worker confirmed block -- record locally so client gate fires next time
           recordSubmission(email);
           showRateLimitModal(email);
           return;
